@@ -5,10 +5,10 @@ const Pagination = ({ page, totalPages, onChange }) => {
   const next = () => onChange(Math.min(page + 1, totalPages || 1));
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-      <button onClick={prev} disabled={page <= 1}>Prev</button>
-      <span>Page {page} of {totalPages || 1}</span>
-      <button onClick={next} disabled={page >= (totalPages || 1)}>Next</button>
+    <div className="pagination" role="navigation" aria-label="Pagination">
+      <button className="btn" onClick={prev} disabled={page <= 1} aria-label="Previous page">Prev</button>
+      <span className="pagination-text">Page {page} of {totalPages || 1}</span>
+      <button className="btn" onClick={next} disabled={page >= (totalPages || 1)} aria-label="Next page">Next</button>
     </div>
   );
 };

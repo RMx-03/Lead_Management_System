@@ -24,21 +24,23 @@ const RegisterPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: '60px auto' }}>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%' }} />
+    <div className="auth-card">
+      <h2 className="title">Register</h2>
+      <form onSubmit={handleSubmit} className="form-grid">
+        <div className="field">
+          <label className="label">Email</label>
+          <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%' }} />
+        <div className="field">
+          <label className="label">Password</label>
+          <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-        <button type="submit" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
+        {error && <div className="alert alert-error">{error}</div>}
+        <div className="filter-actions">
+          <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
+        </div>
       </form>
-      <p style={{ marginTop: 16 }}>
+      <p style={{ marginTop: 12 }}>
         Already have an account? <Link to="/login">Login</Link>
       </p>
     </div>

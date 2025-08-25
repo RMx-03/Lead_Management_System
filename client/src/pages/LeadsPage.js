@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
 import { fetchLeads, createLead, updateLead, deleteLead, logout } from '../services/api';
@@ -29,18 +29,24 @@ const initialForm = {
 const LeadsPage = () => {
   const [rowData, setRowData] = useState([]);
   const [columnDefs] = useState([
-    { field: 'firstName' },
-    { field: 'lastName' },
-    { field: 'email' },
-    { field: 'company' },
-    { field: 'city' },
-    { field: 'state' },
-    { field: 'source' },
-    { field: 'status' },
-    { field: 'score' },
-    { field: 'leadValue' },
+    { headerName: 'First Name', field: 'firstName', minWidth: 140 },
+    { headerName: 'Last Name', field: 'lastName', minWidth: 140 },
+    { headerName: 'Email', field: 'email', minWidth: 220 },
+    { headerName: 'Company', field: 'company', minWidth: 180 },
+    { headerName: 'City', field: 'city', minWidth: 120 },
+    { headerName: 'State', field: 'state', minWidth: 100 },
+    { headerName: 'Source', field: 'source', minWidth: 140 },
+    { headerName: 'Status', field: 'status', minWidth: 130 },
+    { headerName: 'Score', field: 'score', minWidth: 110, type: 'numericColumn' },
+    {
+      headerName: 'Lead Value',
+      field: 'leadValue',
+      minWidth: 140,
+      valueFormatter: (p) => (p.value != null ? `$${Number(p.value).toLocaleString()}` : ''),
+      type: 'numericColumn',
+    },
   ]);
-  const defaultColDef = { sortable: true, filter: false, resizable: true, flex: 1 };
+  const defaultColDef = { sortable: true, filter: true, resizable: true, flex: 1 };
 
   const gridRef = useRef(null);
   const [filters, setFilters] = useState({});
@@ -70,6 +76,15 @@ const LeadsPage = () => {
   }, [page, filters]);
 
   useEffect(() => { loadLeads(); }, [loadLeads]);
+
+  const onGridReady = useCallback((params) => {
+    // initial fit
+    params.api.sizeColumnsToFit();
+  }, []);
+
+  const onGridSizeChanged = useCallback((params) => {
+    params.api.sizeColumnsToFit();
+  }, []);
 
   const onSelectionChanged = () => {
     const api = gridRef.current?.api;
@@ -145,18 +160,23 @@ const LeadsPage = () => {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Leads</h1>
-        <button onClick={handleLogout}>Logout</button>
+    <div className="app-shell">
+      <div className="toolbar">
+        <div className="toolbar-left">
+          <h1 className="title">Leads</h1>
+        </div>
+        <div className="toolbar-right">
+          <button className="btn" onClick={() => gridRef.current?.api?.exportDataAsCsv?.()}>Export CSV</button>
+          <button className="btn btn-danger" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
 
       <FilterBar onChange={handleFilterChange} />
 
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-      {loading && <div>Loading...</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+      {loading && <div className="alert">Loading...</div>}
 
-      <div className="ag-theme-alpine" style={{ height: 420, width: '100%' }}>
+      <div className="ag-theme-quartz-dark grid-wrap">
         <AgGridReact
           ref={gridRef}
           rowData={rowData}
@@ -164,52 +184,90 @@ const LeadsPage = () => {
           defaultColDef={defaultColDef}
           rowSelection="single"
           onSelectionChanged={onSelectionChanged}
+          onGridReady={onGridReady}
+          onGridSizeChanged={onGridSizeChanged}
+          animateRows
         />
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
 
-      <h3 style={{ marginTop: 16 }}>{selected ? 'Edit Lead' : 'Create Lead'}</h3>
-      <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-        <input placeholder="First Name" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required />
-        <input placeholder="Last Name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} required />
-        <input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-        <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-        <input placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required />
-        <input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-        <input placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
-        <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
-          <option value="website">website</option>
-          <option value="facebook_ads">facebook_ads</option>
-          <option value="google_ads">google_ads</option>
-          <option value="referral">referral</option>
-          <option value="events">events</option>
-          <option value="other">other</option>
-        </select>
-        <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-          <option value="new">new</option>
-          <option value="contacted">contacted</option>
-          <option value="qualified">qualified</option>
-          <option value="lost">lost</option>
-          <option value="won">won</option>
-        </select>
-        <input placeholder="Score" type="number" value={form.score} onChange={(e) => setForm({ ...form, score: e.target.value })} />
-        <input placeholder="Lead Value" type="number" value={form.leadValue} onChange={(e) => setForm({ ...form, leadValue: e.target.value })} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label>Last Activity</label>
-          <input type="date" value={form.lastActivityAt} onChange={(e) => setForm({ ...form, lastActivityAt: e.target.value })} />
+      <h3 className="section-title">{selected ? 'Edit Lead' : 'Create Lead'}</h3>
+      <form onSubmit={handleCreate} className="form-grid">
+        <div className="field">
+          <label className="label">First Name</label>
+          <input className="input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label>Qualified</label>
-          <input type="checkbox" checked={!!form.isQualified} onChange={(e) => setForm({ ...form, isQualified: e.target.checked })} />
+        <div className="field">
+          <label className="label">Last Name</label>
+          <input className="input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} required />
         </div>
-        <div style={{ gridColumn: 'span 3', display: 'flex', gap: 8 }}>
-          {!selected && <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create Lead'}</button>}
+        <div className="field">
+          <label className="label">Email</label>
+          <input className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+        </div>
+        <div className="field">
+          <label className="label">Phone</label>
+          <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+        </div>
+        <div className="field">
+          <label className="label">Company</label>
+          <input className="input" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required />
+        </div>
+        <div className="field">
+          <label className="label">City</label>
+          <input className="input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+        </div>
+        <div className="field">
+          <label className="label">State</label>
+          <input className="input" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
+        </div>
+        <div className="field">
+          <label className="label">Source</label>
+          <select className="select" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+            <option value="website">website</option>
+            <option value="facebook_ads">facebook_ads</option>
+            <option value="google_ads">google_ads</option>
+            <option value="referral">referral</option>
+            <option value="events">events</option>
+            <option value="other">other</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="label">Status</label>
+          <select className="select" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <option value="new">new</option>
+            <option value="contacted">contacted</option>
+            <option value="qualified">qualified</option>
+            <option value="lost">lost</option>
+            <option value="won">won</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="label">Score</label>
+          <input className="input" type="number" value={form.score} onChange={(e) => setForm({ ...form, score: e.target.value })} />
+        </div>
+        <div className="field">
+          <label className="label">Lead Value</label>
+          <input className="input" type="number" step="0.01" value={form.leadValue} onChange={(e) => setForm({ ...form, leadValue: e.target.value })} />
+        </div>
+        <div className="field">
+          <label className="label">Last Activity</label>
+          <input className="input" type="date" value={form.lastActivityAt} onChange={(e) => setForm({ ...form, lastActivityAt: e.target.value })} />
+        </div>
+        {selected && (
+          <div className="field">
+            <label className="label">Qualified</label>
+            <input type="checkbox" checked={!!form.isQualified} onChange={(e) => setForm({ ...form, isQualified: e.target.checked })} />
+          </div>
+        )}
+        <div className="filter-actions">
+          {!selected && <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create Lead'}</button>}
           {selected && (
             <>
-              <button type="button" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Update Lead'}</button>
-              <button type="button" onClick={handleDelete} style={{ color: 'white', background: 'crimson' }}>Delete Lead</button>
-              <button type="button" onClick={() => { setSelected(null); setForm(initialForm); }}>Cancel</button>
+              <button className="btn btn-primary" type="button" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Update Lead'}</button>
+              <button className="btn btn-danger" type="button" onClick={handleDelete}>Delete Lead</button>
+              <button className="btn" type="button" onClick={() => { setSelected(null); setForm(initialForm); }}>Cancel</button>
             </>
           )}
         </div>

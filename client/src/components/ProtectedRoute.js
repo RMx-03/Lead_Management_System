@@ -26,7 +26,7 @@ const ProtectedRoute = ({ children }) => {
     return () => { mounted = false; };
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="alert">Loading...</div>;
   if (!authenticated) return <Navigate to="/login" replace state={{ from: location }} />;
   return children;
 };
